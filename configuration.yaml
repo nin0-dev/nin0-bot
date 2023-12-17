@@ -2,9 +2,6 @@
 # nin0-bot. If you need any help on
 # config you can go to https://bot.nin0dev.com/docs.
 mod:
-  default_durations: # Here you can write durations in human readable format. (d for days, h for hours, m for minutes, s for seconds, permanent for well, permanent) 
-    mute: 12h # This can go up to 28 days, if higher this will be completely ignored.
-    ban: permanent
   dm_on_punish: true # If nin0-bot should DM the user on punish.
   # Variables:
   #    Server info:
@@ -25,4 +22,5 @@ mod:
     kick: "You have been kicked from [guild.name].\n> **Reason:** [punishment.reason]\n> **Author:** [author.username] ([author.mention])"
     ban: "You have been banned from [guild.name].\n> **Reason:** [punishment.reason]\n> **Duration:** [punishment.duration] (expires [punishment.expiresin])\n> **Author:** [author.username] ([author.mention])"
   hide_command_author: false # Will delete the command message (if prefixed) and will make the command response ephemeral (if slash)
+  ban_msgdelete_days: 0 # How many days of messages to delete when banning (by default)
   

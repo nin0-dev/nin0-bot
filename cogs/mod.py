@@ -22,7 +22,7 @@ class Mod(commands.Cog):
         if ctx.is_app: await ctx.respond(embed=successembed)
         else: await ctx.respond(embed=successembed, mention_author=False)
 
-    def parsevars(self, initial: str, author: discord.Member, member: discord.Member, reason: str, duration: datetime, strduration: str):
+    def parsevars(self, initial: str, author: discord.Member, member: discord.Member, reason: str, duration: datetime = None, strduration: str = ""):
         result = initial
         result = result.replace('[guild.name]', member.guild.name)
         result = result.replace('[guild.id]', str(member.guild.id))
@@ -31,7 +31,7 @@ class Mod(commands.Cog):
         result = result.replace('[author.mention]', author.mention)
         result = result.replace('[punishment.reason]', reason)
         result = result.replace('[punishment.duration]', strduration)
-        result = result.replace('[punishment.expiresin]', '<t:' + str(int(datetime.timestamp(duration))) + ':R>')
+        if duration != None: result = result.replace('[punishment.expiresin]', '<t:' + str(int(datetime.timestamp(duration))) + ':R>')
         return result
 
     @bridge.bridge_command(description="View someone's user information.")
@@ -96,18 +96,57 @@ class Mod(commands.Cog):
     @bridge.bridge_command(description="Mute someone.")
     @bridge.has_permissions(moderate_members=True)
     async def mute(self, ctx, member:discord.Member, duration:str, reason:str = None):
-        # timeout
+        # prep
         await ctx.defer()
         time = datetime.now() + timedelta(seconds=Duration(duration).to_seconds())
-        await member.timeout_for(duration=timedelta(seconds=Duration(duration).to_seconds()), reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason)
         # make DM embed
         dmembed = discord.Embed(color=0xffa850, title=":mute: You got muted")
         basemsg = self.config["mod"]["dm_punish_messages"]["mute"]
         dmembed.description = self.parsevars(basemsg, ctx.author, member, reason, time, duration)
-        await member.send(embed=dmembed)
         # make response embed
         successembed = discord.Embed(color=0x7cff7f, title=":white_check_mark: User muted")
         successembed.description = member.mention + " has been muted from this server.\n> **Reason:** " + reason + "\n> **Expires:** " + "<t:" + str(int(datetime.timestamp(time))) + ":R>"
+        # send DM
+        if self.config["mod"]["dm_on_punish"]:
+            try:
+                await member.send(embed=dmembed)
+            except:
+                successembed.add_field(name="Errors", value="Couldn't send notify DM to user.")
+        # timeout
+        await member.timeout_for(duration=timedelta(seconds=Duration(duration).to_seconds()), reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason) 
+        # send response
+        if ctx.is_app:
+            if self.config["mod"]["hide_command_author"]:
+                await ctx.respond(embed=successembed, ephemeral=True)
+            else:
+                await ctx.respond(embed=successembed)
+        else:
+            if self.config["mod"]["hide_command_author"]:
+                await ctx.message.delete()
+                await ctx.respond(embed=successembed, mention_author=False)
+            else:
+                await ctx.respond(embed=successembed, mention_author=False)
+
+    @bridge.bridge_command(description="Kick someone.")
+    @bridge.has_permissions(kick_members=True)
+    async def kick(self, ctx, member:discord.Member, reason:str = None):
+        # kick
+        await ctx.defer()
+        # make DM embed
+        dmembed = discord.Embed(color=0xffa850, title=":door: You got kicked")
+        basemsg = self.config["mod"]["dm_punish_messages"]["kick"]
+        dmembed.description = self.parsevars(basemsg, ctx.author, member, reason)
+        # make response embed
+        successembed = discord.Embed(color=0x7cff7f, title=":white_check_mark: User kicked")
+        successembed.description = member.mention + " has been kicked from this server.\n> **Reason:** " + reason
+        # send DM
+        if self.config["mod"]["dm_on_punish"]:
+            try:
+                await member.send(embed=dmembed)
+            except:
+                successembed.add_field(name="Errors", value="Couldn't send notify DM to user.")
+        # kick
+        await member.kick(reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason)
         # send response
         if ctx.is_app:
             if self.config["mod"]["hide_command_author"]:
@@ -121,8 +160,6 @@ class Mod(commands.Cog):
             else:
                 await ctx.respond(embed=successembed, mention_author=False)
         
-
-    
 
 def setup(bot): 
     bot.add_cog(Mod(bot))
