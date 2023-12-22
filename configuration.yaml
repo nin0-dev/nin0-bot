@@ -13,14 +13,14 @@ mod:
   #         [author.mention] for author mention (may only show ID)
   #    Punishment info:
   #         [punishment.reason] for the punish reason
-  #         [punishment.duration] for the duration (only mutes and bans) 
   #         [punishment.expiresin] for expiration timestamp (relative) (only mutes and bans)
   # Please use \n for new lines.
   dm_punish_messages:
     warn: "You have been warned in [guild.name].\n> **Reason:** [punishment.reason]\n> **Author:** [author.username] ([author.mention])"
-    mute: "You have been muted in [guild.name].\n> **Reason:** [punishment.reason]\n> **Duration:** [punishment.duration] (expires [punishment.expiresin])\n> **Author:** [author.username] ([author.mention])"
+    mute: "You have been muted in [guild.name].\n> **Reason:** [punishment.reason]\n> **Expires:** [punishment.expiresin]\n> **Author:** [author.username] ([author.mention])"
+    unmute: "You have been unmuted from [guild.name].\n> **Reason:** [punishment.reason]\n> **Author:** [author.username] ([author.mention])"
     kick: "You have been kicked from [guild.name].\n> **Reason:** [punishment.reason]\n> **Author:** [author.username] ([author.mention])"
-    ban: "You have been banned from [guild.name].\n> **Reason:** [punishment.reason]\n> **Duration:** [punishment.duration] (expires [punishment.expiresin])\n> **Author:** [author.username] ([author.mention])"
+    ban: "You have been banned from [guild.name].\n> **Reason:** [punishment.reason]\n> **Expires:** [punishment.expiresin]\n> **Author:** [author.username] ([author.mention])"
   hide_command_author: false # Will delete the command message (if prefixed) and will make the command response ephemeral (if slash)
   ban_msgdelete_days: 0 # How many days of messages to delete when banning (by default)
   
