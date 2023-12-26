@@ -20,7 +20,7 @@ cogs_list = [
 
 for cog in cogs_list:
     bot.load_extension(f'cogs.{cog}')
-
+    
 #@bot.event
 #async def on_application_command_error(ctx: discord.ApplicationContext, error: discord.DiscordException):
     #errorembed = discord.Embed()
@@ -45,4 +45,4 @@ for cog in cogs_list:
         #errorembed.description = "Here are the error details: \n```" + str(error) + "```"
     #await ctx.respond(embed=errorembed, mention_author=False)
     
-bot.run(os.getenv('TOKEN')) # run the bot with the token
+bot.run(os.getenv('TOKEN')) # run the bot with the token of
