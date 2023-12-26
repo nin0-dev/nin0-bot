@@ -6,4 +6,5 @@ lib64
 .env
 pyvenv.cfg
 data
-__pycache__/main.cpython-311.pyc
+__pycache__
+cogs/__pycache__
