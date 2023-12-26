@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from datetime import timedelta
 from discord.ext import bridge
+from discord import default_permissions
 from datetime import datetime
 import yaml
 from durations import Duration
@@ -21,6 +22,7 @@ class Mod(commands.Cog):
     
     cfg = open('configuration.yaml', 'r')
     config = yaml.safe_load(cfg)
+    group = discord.SlashCommandGroup("moderation", "Moderation commands.")
 
     def get_case(self, cid: int):
         casesfile = open('data/cases.yaml', 'r')
@@ -49,14 +51,18 @@ class Mod(commands.Cog):
             yaml.dump(cases, file, default_style='"')
         return int(newcasename)
 
-    @bridge.bridge_command(description="Change someone's nickname.")
-    @bridge.has_permissions(manage_nicknames=True)
-    async def rename(self, ctx, member:discord.Member, nick:str):
+    @group.command(description="Change someone's nickname.")
+    @default_permissions(manage_nicknames=True)
+    async def rename(
+        self, 
+        ctx, 
+        member:discord.Option(str, description="The member to rename."), 
+        nick:discord.Option(str, description="The new nickname.")
+    ):
         await member.edit(nick=nick)
         successembed = discord.Embed(color=0x7cff7f, title=":white_check_mark: Success")
         successembed.description = member.mention + "'s nickname was changed to `" + nick + "`."
-        if ctx.is_app: await ctx.respond(embed=successembed)
-        else: await ctx.respond(embed=successembed, mention_author=False)
+        await ctx.respond(embed=successembed)
 
     def parsevars(self, initial: str, author: discord.Member, member: discord.Member, reason: str, duration: datetime = None):
         result = initial
@@ -72,8 +78,12 @@ class Mod(commands.Cog):
             result = result.replace('[punishment.expiresin]', 'never')
         return result
 
-    @bridge.bridge_command(description="View someone's user information.")
-    async def userinfo(self, ctx, member:discord.Member=None):
+    @group.command(description="View someone's user information.")
+    async def userinfo(
+        self,
+        ctx,
+        member:discord.Option(discord.SlashCommandOptionType.user, description="The member to view info on.")
+    ):
         target = ""
         if member == None:
             # user wants to info themselves
@@ -119,21 +129,28 @@ class Mod(commands.Cog):
         infoembed.description = "Created on <t:" + createddate + ":f> (<t:" + createddate + ":R>)\n" + "Joined on <t:" + joineddate + ":f> (<t:" + joineddate + ":R>)"
         if rpcs != "":
             infoembed.add_field(name="Presence info", value=rpcs)
-        if ctx.is_app: await ctx.respond(embed=infoembed)
-        else: await ctx.respond(embed=infoembed, mention_author=False)
+        await ctx.respond(embed=infoembed)
     
-    @bridge.bridge_command(description="Set channel/thread slowmode.")
-    @bridge.has_permissions(moderate_members=True)
-    async def slowmode(self, ctx, seconds:int):
+    @group.command(description="Set channel/thread slowmode.")
+    @default_permissions(moderate_members=True)
+    async def slowmode(
+        self,
+        ctx,
+        seconds:discord.Option(int, description="The slowmode duration to set.")):
         await ctx.channel.edit(slowmode_delay=seconds)
         successembed = discord.Embed(color=0x7cff7f, title=":white_check_mark: Success")
         successembed.description = "Channel slowmode set to " + str(seconds) + " seconds."
-        if ctx.is_app: await ctx.respond(embed=successembed)
-        else: await ctx.respond(embed=successembed, mention_author=False)
+        await ctx.respond(embed=successembed)
 
-    @bridge.bridge_command(description="Mute someone.")
-    @bridge.has_permissions(moderate_members=True)
-    async def mute(self, ctx, member:discord.Member, duration:str, reason:str = "No reason provided"):
+    @group.command(description="Mute someone.")
+    @default_permissions(moderate_members=True)
+    async def mute(
+        self, 
+        ctx, 
+        member:discord.Member, 
+        duration:discord.Option(str, description="The punishment duration."), 
+        reason:discord.Option(str, description="The punishment reason.") = "No reason provided"
+    ):
         # prep
         await ctx.defer()
         time = datetime.now() + timedelta(seconds=Duration(duration).to_seconds())
@@ -159,21 +176,19 @@ class Mod(commands.Cog):
         # timeout
         await member.timeout_for(duration=timedelta(seconds=Duration(duration).to_seconds()), reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason) 
         # send response
-        if ctx.is_app:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.respond(embed=successembed, ephemeral=True)
-            else:
-                await ctx.respond(embed=successembed)
+        if self.config["mod"]["hide_command_author"]:
+            await ctx.respond(embed=successembed, ephemeral=True)
         else:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.message.delete()
-                await ctx.respond(embed=successembed, mention_author=False)
-            else:
-                await ctx.respond(embed=successembed, mention_author=False)
+            await ctx.respond(embed=successembed)
 
-    @bridge.bridge_command(description="Unmute someone.")
-    @bridge.has_permissions(moderate_members=True)
-    async def unmute(self, ctx, member:discord.Member, reason:str = "No reason provided"):
+    @group.command(description="Unmute someone.")
+    @default_permissions(moderate_members=True)
+    async def unmute(
+        self, 
+        ctx, 
+        member:discord.Option(discord.SlashCommandOptionType.user, description="The member to punish.") = "No reason provided", 
+        reason:discord.Option(str, description="The punishment reason.") = "No reason provided"
+    ):
         # prep
         await ctx.defer()
         # make DM embed
@@ -193,21 +208,19 @@ class Mod(commands.Cog):
         # unmute
         await member.remove_timeout(reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason)
         # send response
-        if ctx.is_app:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.respond(embed=successembed, ephemeral=True)
-            else:
-                await ctx.respond(embed=successembed)
+        if self.config["mod"]["hide_command_author"]:
+            await ctx.respond(embed=successembed, ephemeral=True)
         else:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.message.delete()
-                await ctx.respond(embed=successembed, mention_author=False)
-            else:
-                await ctx.respond(embed=successembed, mention_author=False)
+            await ctx.respond(embed=successembed)
 
-    @bridge.bridge_command(description="Kick someone.")
-    @bridge.has_permissions(kick_members=True)
-    async def kick(self, ctx, member:discord.Member, reason:str = "No reason provided"):
+    @group.command(description="Kick someone.")
+    @default_permissions(kick_members=True)
+    async def kick(
+        self, 
+        ctx, 
+        member:discord.Option(discord.SlashCommandOptionType.user, description="The member to punish.") = "No reason provided", 
+        reason:discord.Option(str, description="The punishment reason.") = "No reason provided"
+    ):
         # kick
         await ctx.defer()
         # make case
@@ -230,21 +243,20 @@ class Mod(commands.Cog):
         # kick
         await member.kick(reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason)
         # send response
-        if ctx.is_app:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.respond(embed=successembed, ephemeral=True)
-            else:
-                await ctx.respond(embed=successembed)
+        if self.config["mod"]["hide_command_author"]:
+            await ctx.respond(embed=successembed, ephemeral=True)
         else:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.message.delete()
-                await ctx.respond(embed=successembed, mention_author=False)
-            else:
-                await ctx.respond(embed=successembed, mention_author=False)
+            await ctx.respond(embed=successembed)
         
-    @bridge.bridge_command(description="Ban someone.")
-    @bridge.has_permissions(kick_members=True)
-    async def ban(self, ctx, member:discord.Member, reason:str = "No reason provided", delete_days: int = config["mod"]["ban_msgdelete_days"]):
+    @group.command(description="Ban someone.")
+    @default_permissions(ban_members=True)
+    async def ban(
+        self, 
+        ctx, 
+        member:discord.Option(discord.SlashCommandOptionType.user, description="The member to punish.") = "No reason provided", 
+        reason:discord.Option(str, description="The punishment reason.") = "No reason provided",
+        delete_days:discord.Option(int, description="The days of messages that should be purged.") = config["mod"]["ban_msgdelete_days"]
+    ):
         # prep
         await ctx.defer()
         # make case
@@ -268,21 +280,19 @@ class Mod(commands.Cog):
         # ban
         await member.ban(reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason, delete_message_seconds=delete_days*86400)
         # send response
-        if ctx.is_app:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.respond(embed=successembed, ephemeral=True)
-            else:
-                await ctx.respond(embed=successembed)
+        if self.config["mod"]["hide_command_author"]:
+            await ctx.respond(embed=successembed, ephemeral=True)
         else:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.message.delete()
-                await ctx.respond(embed=successembed, mention_author=False)
-            else:
-                await ctx.respond(embed=successembed, mention_author=False)
+            await ctx.respond(embed=successembed)
 
-    @bridge.bridge_command(description="Unban someone.")
-    @bridge.has_permissions(ban_members=True)
-    async def unban(self, ctx, userid:str, reason:str = "No reason provided"):
+    @group.command(description="Unban someone.")
+    @default_permissions(ban_members=True)
+    async def unban(
+        self, 
+        ctx, 
+        userid:discord.Option(str, description="The userID to punish."), 
+        reason:discord.Option(str, description="The punishment reason.") = "No reason provided"
+    ):
         # prep
         await ctx.defer()
         user = await self.bot.fetch_user(int(userid))
@@ -293,21 +303,20 @@ class Mod(commands.Cog):
         # ban
         await ctx.guild.unban(user, reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason)
         # send response
-        if ctx.is_app:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.respond(embed=successembed, ephemeral=True)
-            else:
-                await ctx.respond(embed=successembed)
+        if self.config["mod"]["hide_command_author"]:
+            await ctx.respond(embed=successembed, ephemeral=True)
         else:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.message.delete()
-                await ctx.respond(embed=successembed, mention_author=False)
-            else:
-                await ctx.respond(embed=successembed, mention_author=False)
+            await ctx.respond(embed=successembed)
 
-    @bridge.bridge_command(description="Ban someone that isn't in the server.")
-    @bridge.has_permissions(ban_members=True)
-    async def hackban(self, ctx, userid:str, reason:str = "No reason provided", delete_days: int = config["mod"]["ban_msgdelete_days"]):
+    @group.command(description="Ban someone that isn't in the server.")
+    @default_permissions(ban_members=True)
+    async def hackban(
+        self, 
+        ctx, 
+        userid:discord.Option(str, description="The userID to punish."), 
+        reason:discord.Option(str, description="The punishment reason.") = "No reason provided",
+        delete_days:discord.Option(int, description="The days of messages that should be purged.") = config["mod"]["ban_msgdelete_days"]
+    ):
         # prep
         await ctx.defer()
         user = await self.bot.fetch_user(int(userid))
@@ -325,20 +334,13 @@ class Mod(commands.Cog):
         # ban
         await ctx.guild.ban(user, reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason, delete_message_seconds=delete_days*86400)
         # send response
-        if ctx.is_app:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.respond(embed=successembed, ephemeral=True)
-            else:
-                await ctx.respond(embed=successembed)
+        if self.config["mod"]["hide_command_author"]:
+            await ctx.respond(embed=successembed, ephemeral=True)
         else:
-            if self.config["mod"]["hide_command_author"]:
-                await ctx.message.delete()
-                await ctx.respond(embed=successembed, mention_author=False)
-            else:
-                await ctx.respond(embed=successembed, mention_author=False)
+            await ctx.respond(embed=successembed)
 
-    @bridge.bridge_command(description="View a moderation case.")
-    @bridge.has_permissions(moderate_members=True)
+    @group.command(description="View a moderation case.")
+    @default_permissions(moderate_members=True)
     async def case(self, ctx, caseid:int):
         await ctx.defer()
         # get case
@@ -351,8 +353,7 @@ class Mod(commands.Cog):
         if case.type == "ban": embed.color = 0xff5050
         embed.title = "Case information"
         embed.description = "> **ID:** `" + str(case.caseid) + "`\n> **User:** <@" + str(case.target) + ">\n> **Moderator:** <@" + str(case.mod) + ">\n> **Type:** " + case.type + "\n> **Reason:** " + case.reason + "\n> **Created at:** <t:" + str(case.time) + ">" 
-        if ctx.is_app: await ctx.respond(embed=embed)
-        else: await ctx.respond(embed=embed, mention_author=False)
+        await ctx.respond(embed=embed)
 
         
 
