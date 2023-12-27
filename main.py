@@ -15,7 +15,8 @@ async def on_ready():
     print(f"{bot.user} is ready and online!")
 
 cogs_list = [
-    'mod'
+    'mod',
+    'info'
 ]
 
 for cog in cogs_list:
