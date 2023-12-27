@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from datetime import datetime
+from discord.ext import bridge
 
 
 
@@ -8,9 +9,9 @@ class Info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         
-    group = discord.SlashCommandGroup("info", "Information commands.")
+    #group = bridge.BridgeSlashGroup(name="info")
 
-    @group.command(description="View someone's user information.")
+    @bridge.bridge_command(description="View someone's user information.")
     async def user(
         self,
         ctx,
