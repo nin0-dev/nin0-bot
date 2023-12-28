@@ -9,14 +9,8 @@ class Info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         
-    #group = bridge.BridgeSlashGroup(name="info")
-
     @bridge.bridge_command(description="View someone's user information.")
-    async def user(
-        self,
-        ctx,
-        member:discord.Option(discord.SlashCommandOptionType.user, description="The member to view info on.")
-    ):
+    async def userinfo(self, ctx, member:discord.Member = None):
         target = ""
         if member == None:
             # user wants to info themselves
@@ -60,6 +54,7 @@ class Info(commands.Cog):
 
         infoembed = discord.Embed(color=color, title=status + " " + username)
         infoembed.description = "Created on <t:" + createddate + ":f> (<t:" + createddate + ":R>)\n" + "Joined on <t:" + joineddate + ":f> (<t:" + joineddate + ":R>)"
+        infoembed.set_thumbnail(url=target.avatar.url)
         if rpcs != "":
             infoembed.add_field(name="Presence info", value=rpcs)
         # get roles
@@ -68,7 +63,8 @@ class Info(commands.Cog):
             roles = roles + role.mention + ", "
         roles = roles.rstrip(", ")
         infoembed.add_field(name="Roles", value=roles, inline=False)
-        await ctx.respond(embed=infoembed)
+        if ctx.is_app: await ctx.respond(embed=infoembed)
+        else: await ctx.respond(embed=infoembed, mention_author=False)
 
         
 def setup(bot): 
