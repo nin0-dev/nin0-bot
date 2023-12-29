@@ -4,7 +4,10 @@ from discord.ext import bridge
 from discord.ext import commands
 from dotenv import load_dotenv
 from cogs import mod
+import yaml
 
+cfg = open('configuration.yaml', 'r')
+config = yaml.safe_load(cfg)
 load_dotenv() # load all the variables from the env file
 intents = discord.Intents.all()
 bot = bridge.Bot(command_prefix='!', intents=intents)
@@ -13,10 +16,16 @@ bot = bridge.Bot(command_prefix='!', intents=intents)
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready and online!")
+    # leave guilds
+    for guild in bot.guilds:
+        if not guild.id == config["guild_id"]:
+            await guild.leave()
+
 
 cogs_list = [
     'mod',
-    'info'
+    'info',
+    'oneguild'
 ]
 
 for cog in cogs_list:
@@ -46,4 +55,8 @@ async def on_command_error(ctx: discord.ApplicationContext, error: discord.Disco
         errorembed.description = "Here are the error details: \n```" + str(error) + "```"
     await ctx.respond(embed=errorembed, mention_author=False)
     
+# check oneguild
+if config["guild_id"] == "YOUR_SERVER_ID":
+    print("ERROR: Please set your guild id in configuration.yaml.")
+    exit(1)
 bot.run(os.getenv('TOKEN')) # run the bot with the token of

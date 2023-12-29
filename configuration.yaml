@@ -1,6 +1,9 @@
 # This is the configuration file for
 # nin0-bot. If you need any help on
 # config you can go to https://bot.nin0dev.com/docs.
+
+# GUILD ID: The bot can only run on ONE server. Specify the ID of that server under that comment.
+guild_id: 1179162939647864852
 mod:
   dm_on_punish: true # If nin0-bot should DM the user on punish.
   # Variables:

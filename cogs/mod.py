@@ -162,7 +162,7 @@ class Mod(commands.Cog):
         # kick
         await ctx.defer()
         # make case
-        cid = self.create_case(member.id, ctx.author.id, reason, "kick", int(datetime.timestamp(time)))
+        cid = self.create_case(member.id, ctx.author.id, reason, "kick", None)
         # make DM embed
         dmembed = discord.Embed(color=0xff5050, title=":door: You got kicked")
         basemsg = self.config["mod"]["dm_punish_messages"]["kick"]
@@ -170,6 +170,43 @@ class Mod(commands.Cog):
         # make response embed
         successembed = discord.Embed(color=0x7cff7f, title=":white_check_mark: User kicked")
         successembed.description = member.mention + " has been kicked from this server."
+        successembed.description = successembed.description + "\n> **Case ID:** `" + str(cid) + "`"
+        if reason != None: successembed.description = successembed.description + "\n> **Reason:** " + str(reason) + ""
+        # send DM
+        if self.config["mod"]["dm_on_punish"]:
+            try:
+                await member.send(embed=dmembed)
+            except:
+                successembed.add_field(name="Errors", value="Couldn't send notify DM to user.")
+        # kick
+        await member.kick(reason="<" + ctx.author.name + "> (" + str(ctx.author.id) + "): " + reason)
+        # send response
+        if ctx.is_app:
+            if self.config["mod"]["hide_command_author"]:
+                await ctx.respond(embed=successembed, ephemeral=True)
+            else:
+                await ctx.respond(embed=successembed)
+        else:
+            if self.config["mod"]["hide_command_author"]:
+                await ctx.message.delete()
+                await ctx.respond(embed=successembed, mention_author=False)
+            else:
+                await ctx.respond(embed=successembed, mention_author=False)
+
+    @bridge.bridge_command(description="Warn someone.")
+    @bridge.has_permissions(moderate_members=True)
+    async def warn(self, ctx, member:discord.Member, reason:str = "No reason provided"):
+        # prep
+        await ctx.defer()
+        # make case
+        cid = self.create_case(member.id, ctx.author.id, reason, "warn", int(datetime.timestamp(time)))
+        # make DM embed
+        dmembed = discord.Embed(color=0xff5050, title=":warning: You got warned")
+        basemsg = self.config["mod"]["dm_punish_messages"]["warn"]
+        dmembed.description = self.parsevars(basemsg, ctx.author, member, reason)
+        # make response embed
+        successembed = discord.Embed(color=0x7cff7f, title=":white_check_mark: User warned")
+        successembed.description = member.mention + " has been warned."
         successembed.description = successembed.description + "\n> **Case ID:** `" + str(cid) + "`"
         if reason != None: successembed.description = successembed.description + "\n> **Reason:** " + str(reason) + ""
         # send DM
