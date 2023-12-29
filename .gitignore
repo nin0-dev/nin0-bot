@@ -8,3 +8,4 @@ pyvenv.cfg
 data
 __pycache__
 cogs/__pycache__
+configuration.yaml
