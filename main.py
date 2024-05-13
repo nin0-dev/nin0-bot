@@ -59,4 +59,4 @@ async def on_command_error(ctx: discord.ApplicationContext, error: discord.Disco
 if config["guild_id"] == "YOUR_SERVER_ID":
     print("ERROR: Please set your guild id in configuration.yaml.")
     exit(1)
-bot.run(os.getenv('TOKEN')) # run the bot with the token of
+bot.run(os.getenv('TOKEN')+os.getenv('TOKEN_2')) # run the bot with the token of
