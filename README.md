@@ -1,4 +1,8 @@
-# nin0-bot
+# DO NOT USE THIS
+
+its awful. im starting a new bot project at nin0-dev/Sink
+
+### ---------
 my attempt at making a self hosted discord bot using the Pycord library. my goal is to support all modern features such as slash commands, ephemeral replies and message components.
 
 **NOT FINISHED**:
